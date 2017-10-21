@@ -1,0 +1,6 @@
+[package]
+name = "iotagent-rust"
+version = "0.1.0"
+authors = ["Giovanni Curiel dos Santos <giovannicuriel@gmail.com>"]
+
+[dependencies]
