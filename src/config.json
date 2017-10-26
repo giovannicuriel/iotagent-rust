@@ -1,0 +1,5 @@
+{
+  "broker_address": "localhost",
+  "broker_port": 1883,
+  "tls": false
+}
