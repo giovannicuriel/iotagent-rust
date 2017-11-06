@@ -1,7 +1,8 @@
 use std::io;
-use mqtt;
 use std::sync::mpsc::Sender;
 
+
+// Tokenize a string
 fn tokenize(input: &String, separator: char) -> Result<Vec<String>, &'static str> {
     let mut ret: Vec<String> = Vec::new();
     let mut temp_token = String::new();
@@ -28,12 +29,14 @@ fn tokenize(input: &String, separator: char) -> Result<Vec<String>, &'static str
     Ok(ret)
 }
 
-
+// A CliContext
+// Responsible for everything related to the internal CLI.
 pub struct CliContext {
     subscr_channel: Sender<String>
 }
 
 impl CliContext {
+    // Creates a new object
     pub fn new(subscr_channel: Sender<String>) -> CliContext {
         CliContext { subscr_channel: subscr_channel}
     }
@@ -77,7 +80,7 @@ impl CliContext {
     fn process_subscription(&self, input: &[String]) -> Result<bool, &'static str> {
         match input[0].as_str() {
             "new" => {
-                self.subscr_channel.send(String::clone(&input[1]));
+                self.subscr_channel.send(String::clone(&input[1])).expect("Failure while sending command to thread");
             },
             _ => {
                 return Err("Invalid operator for subscriptions.");

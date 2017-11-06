@@ -1,7 +1,6 @@
 use rumqtt::{MqttOptions, MqttCallback, MqttClient, QoS, Message};
 
 use std::thread;
-use std::time::Duration;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
