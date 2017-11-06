@@ -5,6 +5,8 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 use std::sync::Mutex;
+use serde_json;
+use serde_json::{Value, Map};
 use config;
 use std::str;
 
@@ -12,19 +14,49 @@ pub struct MqttContext {
     sender_channel: Sender<String>
 }
 
-fn counter_cb(message: Message) {
-    println!("message --> {:?}", message);
-    let str_payload = str::from_utf8(&message.payload).expect("error in message");
-    println!("Payload: {}", str_payload);
-}
-
 impl MqttContext {
+    fn flatten_object(path: String, v: Map<String, Value>) -> Vec<(String, Value)> {
+        let mut ret: Vec<(String, Value)> = Vec::new();
+        for pair in v {
+            let current_path: String = path.clone() + ".".into() + &pair.0;
+            match pair.1 {
+                Value::Bool(_) => {
+                    ret.push((current_path, pair.1));
+                }
+                Value::Number(_) => {
+                    ret.push((current_path, pair.1));
+                }
+                Value::String(_) => {
+                    ret.push((current_path, pair.1));
+                }
+                Value::Array(_) => {
+                    ret.push((current_path, pair.1));
+                }
+                Value::Object(v) => {
+                    ret.extend(MqttContext::flatten_object(current_path, v));
+                }
+                _ => {
+                    // Null
+                }
+            }
+        }
+
+        ret
+    }
+    fn flatten_and_send(message: Message) {
+        let str_payload = str::from_utf8(&message.payload).expect("error in message");
+        let parsed_data: Map<String, Value> = serde_json::from_str(str_payload).expect("Error while parsing JSON");
+
+        let results = MqttContext::flatten_object("".into(), parsed_data);
+        println!("Results: {:?}", results);
+    }
+
     pub fn start(cfg: config::Config) -> MqttContext {
         let client_options = MqttOptions::new()
                 .set_keep_alive(cfg.keep_alive)
                 .set_reconnect(cfg.reconnect)
                 .set_broker(&format!("{}:{}", cfg.broker_address, cfg.broker_port));
-        let message_cb = MqttCallback::new().on_message(counter_cb);
+        let message_cb = MqttCallback::new().on_message(MqttContext::flatten_and_send);
         let mut client = MqttClient::start(client_options, Some(message_cb)).expect("Coudn't start");
 
         // Prepare the channels

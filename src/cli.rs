@@ -43,6 +43,8 @@ impl CliContext {
 
     pub fn start(&self) {
         let mut input = String::new();
+        println!("Subscribing to the default /test topic...");
+        self.subscr_channel.send("/test".into()).expect("Failure while sending command to thread");
         loop {
             match io::stdin().read_line(&mut input) {
                 Ok(_) => {
