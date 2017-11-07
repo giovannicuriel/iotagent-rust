@@ -18,7 +18,15 @@ impl MqttContext {
     fn flatten_object(path: String, v: Map<String, Value>) -> Vec<(String, Value)> {
         let mut ret: Vec<(String, Value)> = Vec::new();
         for pair in v {
-            let current_path: String = path.clone() + ".".into() + &pair.0;
+            let mut separator: String = "".into();
+
+            if path != "" {
+                separator = ".".into();
+            }
+
+            // Only 'path' should be cloned because it will generate another object
+            // If path was used, the next loop would access a moved value.
+            let current_path: String = path.clone() + &separator + &pair.0;
             match pair.1 {
                 Value::Bool(_) => {
                     ret.push((current_path, pair.1));
@@ -63,7 +71,8 @@ impl MqttContext {
         let (tx_mqtt, rx_mqtt): (Sender<String>, Receiver<String>) = mpsc::channel();
 
         // We should use Arc and Mutex so that we can pass to the receiver
-        // thread
+        // thread. This is because rx_mqtt doesn't implement a few traits to make
+        // that possible.
         let rx_shared = Arc::new(Mutex::new(rx_mqtt));
 
         thread::Builder::new().spawn(move || {
