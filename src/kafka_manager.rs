@@ -1,14 +1,19 @@
 use std::time::Duration;
-
+use std::collections::HashMap;
 use kafka::producer::{Producer, Record, RequiredAcks};
 use kafka::error::Error as KafkaError;
+
 
 pub fn produce_message<'a, 'b>(
     data: &'a [u8],
     topic: &'b str,
     brokers: Vec<String>,
 ) -> Result<(), KafkaError> {
-    println!("About to d publish a message at {:?} to: {}", brokers, topic);
+    println!(
+        "About to d publish a message at {:?} to: {}",
+        brokers,
+        topic
+    );
 
     // ~ create a producer. this is a relatively costly operation, so
     // you'll do this typically once in your application and re-use
@@ -46,4 +51,22 @@ pub fn produce_message<'a, 'b>(
     try!(producer.send(&Record::from_value(topic, data)));
 
     Ok(())
+}
+
+
+type KafkaSubscriberCallback = fn(&[u8]);
+
+pub struct KafkaManager {
+    subscribers: HashMap<String, Vec<KafkaSubscriberCallback>>,
+}
+
+impl KafkaManager {
+    pub fn new() -> KafkaManager {
+        KafkaManager { subscribers: HashMap::new() }
+    }
+
+    pub fn subscribe(&self, topic: String, callback: KafkaSubscriberCallback) {
+        let temp = "this is a test".as_bytes();
+        callback(temp);
+    }
 }

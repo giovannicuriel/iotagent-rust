@@ -5,21 +5,43 @@ extern crate serde_json;
 extern crate rumqtt;
 extern crate kafka;
 
-use std::thread;
+use std::env;
 
 mod config;
-mod mqtt;
-mod cli;
-mod kafka_fn;
+mod orion_handler;
+mod data_broker;
+mod device_manager_handler;
+mod kafka_manager;
 
-// Test
-// this documentation is a test
+// use orion_handler::OrionHandler;
+
+fn process_data(data: &[u8]) {
+    println!("Data:");
+    for d in data {
+        println!("[{}]: {}", d, *d as char);
+    }
+}
 fn main() {
-    // // Reading configuration file.
-    // let config = config::read("./src/config.json");
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 3 {
+        println!("Usage: node {} CONFIG_FILE.json", args[1]);
+        return;
+    }
+
+    // Reading configuration file.
+    let configuration = config::read_config("./config.json");
+
+    let kafka_manager = kafka_manager::KafkaManager::new();
+    kafka_manager.subscribe("teste".to_string(), process_data);
+
+    // let orionHandler = OrionHandler::new(configuration);
+    // let deviceManagerHandler = DeviceManagerHandler::new(configuration);
+    // let agent = Agent::new(configuration, orionHandler, deviceManagerHandler);
+    // agent.start_mqtt();
+
 
     // // Create a MqttContext by calling start.
-    // let mqtt_context = mqtt::MqttContext::start(config);
+    // let mqtt_context = mqtt::MqttContext::start(configuration);
 
     // // Clone the sender part of a communication channel, so that
     // // we can send data to the MqttContext thread (subscribing to
@@ -45,18 +67,18 @@ fn main() {
 
     // println!("... CLI started.");
 
-    //Send one message
+    // //Send one message
 
-    let broker: String = "127.0.0.1:2181".into();
-    let topic = "subscription-xyz";
+    // let broker = "127.0.0.1:2181";
+    // let topic = "subscription-xyz";
 
-    let data = "hello, kafka".as_bytes();
+    // let data = "hello, kafka".as_bytes();
 
-    if let Err(e) = kafka_fn::produce_message(data, topic, vec![broker.to_owned()]) {
-        println!("Failed producing messages: {}", e);
-    }
+    // if let Err(e) = kafka_fn::produce_message(data, topic, vec![broker.to_owned()]) {
+    //     println!("Failed producing messages: {}", e);
+    // }
 
 
-    // Joins.
+    // // Joins.
     // cli_thread.join().unwrap();
 }
